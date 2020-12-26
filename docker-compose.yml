@@ -30,7 +30,7 @@ services:
     tty: true
     
   transmission:
-    image: linuxserver/transmission:latest
+    image: linuxserver/transmission
     depends_on:
       - vpn
     environment:
@@ -143,11 +143,11 @@ services:
       - vpn:ombi
     ports:
       - "8080:80"
-      - "443:443"
+      #- "443:443"
     read_only: true
     volumes:
-      - ${PWD}/nginx.conf:/etc/nginx/conf.d/main.conf:ro
-      - ${PWD}/ssl:/etc/nginx/ssl:ro
+      - $PWD/nginx.conf:/etc/nginx/conf.d/main.conf:ro
+      - $PWD/ssl:/etc/nginx/ssl:ro
     tmpfs:
       - /run
       - /tmp
