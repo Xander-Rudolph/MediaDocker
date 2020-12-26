@@ -7,7 +7,7 @@ services:
   vpn:
     image: pia_vpn:0.0.1
     cap_add:
-      - net_${SMBUSERNAME}
+      - net_admin
     dns:
      - 8.8.4.4
      - 8.8.8.8
