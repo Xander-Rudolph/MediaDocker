@@ -63,7 +63,6 @@ services:
       - completedownloads:/downloads
       - tv:/tv
     
-# -------------------- Not working --------------------
   radarr:
     image: linuxserver/radarr
     depends_on:
@@ -120,15 +119,45 @@ services:
       PUID: 0
     volumes:
       - ombi:/config
+
+
+# -------------------- Not working --------------------
+  web:
+    image: nginx
+    depends_on:
+      - transmission
+      - sonarr
+      - radarr
+      - lidarr
+      - jackett
+      - ombi
+    environment:
+      TZ: ${TZONE}
+      IPV6: 0
+    links:
+      - vpn:transmission
+      - vpn:sonarr
+      - vpn:radarr
+      - vpn:lidarr
+      - vpn:jackett
+      - vpn:ombi
+    ports:
+      - "8080:80"
+      - "443:443"
+    read_only: true
+    volumes:
+      - ${PWD}/nginx.conf:/etc/nginx/conf.d/main.conf:ro
+      - ${PWD}/ssl:/etc/nginx/ssl:ro
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/cache/nginx
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
 # -------------------- End Not working --------------------
 
 volumes:
-    # transmission:
-        # driver: local
-        # driver_opts:
-            # type: cifs
-            # device: //${SMBNETADDRE}/config/docker/transmission
-            # o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
     transmission:
         driver: local
         driver_opts:
@@ -143,12 +172,6 @@ volumes:
             device: //${SMBNETADDRE}/Media/downloads
             o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
         
-    # jackett:
-        # driver: local
-        # driver_opts:
-            # type: cifs
-            # device: //${SMBNETADDRE}/config/docker/jackett
-            # o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
     jackett:
         driver: local
         driver_opts:
@@ -170,12 +193,6 @@ volumes:
             device: //${SMBNETADDRE}/Media/downloads/complete
             o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
         
-    # sonarr:
-        # driver: local
-        # driver_opts:
-            # type: cifs
-            # device: //${SMBNETADDRE}/config/docker/sonarr
-            # o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
     sonarr:
         driver: local
         driver_opts:
@@ -190,12 +207,6 @@ volumes:
             device: //${SMBNETADDRE}/Media/TV
             o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
         
-    # radarr:
-        # driver: local
-        # driver_opts:
-            # type: cifs
-            # device: //${SMBNETADDRE}/config/docker/radarr
-            # o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
     radarr:
         driver: local
         driver_opts:
@@ -224,12 +235,6 @@ volumes:
             device: //${SMBNETADDRE}/Media/Music
             o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
 
-    # ombi:
-        # driver: local
-        # driver_opts:
-            # type: cifs
-            # device: //${SMBNETADDRE}/config/docker/ombi
-            # o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
     ombi:
         driver: local
         driver_opts:
