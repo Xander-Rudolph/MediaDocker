@@ -1,0 +1,207 @@
+version: "3.8"
+networks:
+  default:
+    ipam:
+      driver: default
+services:
+  vpn:
+    image: pia_vpn:0.0.1
+    cap_add:
+      - net_${SMBUSERNAME}
+    dns:
+     - 8.8.4.4
+     - 8.8.8.8
+    ports:
+      - "51413:51413" #transmission
+      - "51413:51413/udp" #transmission
+      - "9091:9091" #transmission Web
+      - "8989:8989" #sonar Web
+      - "7878:7878" #radarr Web
+      - "8686:8686" #lidarr Web
+      - "3579:3579" #ombi Web
+    environment:
+      USERNAME: "${PIAUSERNAME}"
+      PASSWORD: "${PIAPASSWORD}"
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    
+  transmission:
+    image: linuxserver/transmission:latest
+    depends_on:
+      - vpn
+    environment:
+      TZ: ${ZONE}
+      PGID: 0
+      PUID: 0
+      TRANSMISSION_WEB_HOME: "/kettu/"
+    network_mode: "service:vpn"
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+      - transmission:/config
+      - downloads:/downloads
+      
+  sonarr:
+    image: linuxserver/sonarr:latest
+    depends_on:
+      - vpn
+    restart: always
+    network_mode: "service:vpn"
+    environment:
+      TZ: ${TZONE}
+      PGID: 0
+      PUID: 0
+    volumes:
+      - sonarr:/config
+      - completedownloads:/downloads
+      - tv:/tv
+    
+# -------------------- Not working --------------------
+  radarr:
+    image: linuxserver/radarr
+    depends_on:
+      - vpn
+    restart: always
+    network_mode: "service:vpn"
+    environment:
+      TZ: ${TZONE}
+      PGID: 0
+      PUID: 0
+    volumes:
+      - radarr:/config
+      - completedownloads:/downloads
+      - movies:/movies
+      
+  lidarr:
+    image: linuxserver/lidarr
+    depends_on:
+      - vpn
+    restart: always
+    network_mode: "service:vpn"
+    environment:
+      TZ: ${TZONE}
+      PGID: 0
+      PUID: 0
+    volumes:
+      - lidarr:/config
+      - completedownloads:/downloads
+      - music:/music
+
+  jackett:
+    image: linuxserver/jackett
+    depends_on:
+      - vpn
+    restart: always
+    network_mode: "service:vpn"
+    environment:
+      TZ: ${TZONE}
+      PGID: 0
+      PUID: 0
+    volumes:
+      - jackett:/config
+      - jackettdownloads:/downloads
+
+  ombi:
+    image: linuxserver/ombi
+    depends_on:
+      - vpn
+    restart: always
+    network_mode: "service:vpn"
+    environment:
+      TZ: ${TZONE}
+      PGID: 0
+      PUID: 0
+    volumes:
+      - ombi:/config
+# -------------------- End Not working --------------------
+
+volumes:
+    transmission:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/config/docker/transmission
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+        
+    downloads:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/Media/downloads
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+        
+    jackett:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/config/docker/jackett
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+        
+    jackettdownloads:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/Media/downloads/jackett
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+        
+    completedownloads:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/Media/downloads/complete
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+        
+    sonarr:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/config/docker/sonarr
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+        
+    tv:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/Media/TV
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+        
+    radarr:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/config/docker/radarr
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+
+    movies:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/Media/Movies
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+
+    lidarr:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/config/docker/lidarr
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+        
+    music:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/Media/Music
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
+
+    ombi:
+        driver: local
+        driver_opts:
+            type: cifs
+            device: //${SMBNETADDRE}/config/docker/ombi
+            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
