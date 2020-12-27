@@ -12,14 +12,14 @@ services:
      - 8.8.4.4
      - 8.8.8.8
     ports:
-      - "51413:51413" #transmission
+      - "51413:51413"     #transmission
       - "51413:51413/udp" #transmission
-      - "9091:9091" #transmission Web
-      - "8989:8989" #sonar Web
-      - "7878:7878" #radarr Web
-      - "8686:8686" #lidarr Web
-      - "9117:9117" #jackett Web
-      - "3579:3579" #ombi Web
+      - "9091:9091"       #transmission Web
+      - "8989:8989"       #sonar Web
+      - "7878:7878"       #radarr Web
+      - "8686:8686"       #lidarr Web
+      - "9117:9117"       #jackett Web
+      - "3579:3579"       #ombi Web
     environment:
       USERNAME: "${PIAUSERNAME}"
       PASSWORD: "${PIAPASSWORD}"
@@ -60,7 +60,7 @@ services:
       PUID: 0
     volumes:
       - sonarr:/config
-      - completedownloads:/downloads
+      - downloads:/downloads
       - tv:/tv
     
   radarr:
@@ -75,7 +75,7 @@ services:
       PUID: 0
     volumes:
       - radarr:/config
-      - completedownloads:/downloads
+      - downloads:/downloads
       - movies:/movies
       
   lidarr:
@@ -90,7 +90,7 @@ services:
       PUID: 0
     volumes:
       - lidarr:/config
-      - completedownloads:/downloads
+      - downloads:/downloads
       - music:/music
 
   jackett:
@@ -142,8 +142,8 @@ services:
       - vpn:jackett
       - vpn:ombi
     ports:
-      - "8080:80"
-      #- "443:443"
+      - "8080:8080"
+      - "443:443"
     read_only: true
     volumes:
       - $PWD/nginx.conf:/etc/nginx/conf.d/main.conf:ro
@@ -184,13 +184,6 @@ volumes:
         driver_opts:
             type: cifs
             device: //${SMBNETADDRE}/Media/downloads/jackett
-            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
-        
-    completedownloads:
-        driver: local
-        driver_opts:
-            type: cifs
-            device: //${SMBNETADDRE}/Media/downloads/complete
             o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
         
     sonarr:
