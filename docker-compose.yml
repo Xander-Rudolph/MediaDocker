@@ -3,6 +3,7 @@ networks:
   default:
     ipam:
       driver: default
+    
 services:
   vpn:
     image: pia_vpn:0.0.1
@@ -20,6 +21,7 @@ services:
       - "8686:8686"       #lidarr Web
       - "9117:9117"       #jackett Web
       - "3579:3579"       #ombi Web
+      - "9000:9000"       #portainer Web
     environment:
       USERNAME: "${PIAUSERNAME}"
       PASSWORD: "${PIAPASSWORD}"
@@ -105,7 +107,7 @@ services:
       PUID: 1000
     volumes:
       - jackett:/config
-      - jackettdownloads:/downloads
+      - downloads:/downloads
 
   ombi:
     image: linuxserver/ombi
@@ -120,6 +122,18 @@ services:
     volumes:
       - ombi:/config
 
+  portainer:
+    image: portainer/portainer-ce
+    restart: always
+    network_mode: "service:vpn"
+    environment:
+      TZ: ${TZONE}
+      PGID: 0
+      PUID: 0
+    volumes:
+      - type: bind 
+        source: //var/run/docker.sock
+        target: //var/run/docker.sock
 
 # -------------------- Not working --------------------
   web:
@@ -155,6 +169,7 @@ services:
     restart: unless-stopped
     stdin_open: true
     tty: true
+
 # -------------------- End Not working --------------------
 
 volumes:
@@ -178,14 +193,7 @@ volumes:
             type: none
             o: bind
             device: ${LOCALADDRES}/docker/jackett
-        
-    jackettdownloads:
-        driver: local
-        driver_opts:
-            type: cifs
-            device: //${SMBNETADDRE}/Media/downloads/jackett
-            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
-        
+      
     sonarr:
         driver: local
         driver_opts:
