@@ -22,6 +22,7 @@ services:
       - "9117:9117"       #jackett Web
       - "3579:3579"       #ombi Web
       - "9000:9000"       #portainer Web
+      - "32400:32400"     #plex Web
     environment:
       USERNAME: "${PIAUSERNAME}"
       PASSWORD: "${PIAPASSWORD}"
@@ -136,6 +137,25 @@ services:
         target: //var/run/docker.sock
 
 # -------------------- Not working --------------------
+  plex:
+    image: linuxserver/plex
+    depends_on:
+      - vpn
+    restart: always
+    network_mode: "service:vpn"
+    environment:
+      TZ: ${TZONE}
+      PGID: 1001
+      PUID: 1001
+      VERSION: docker
+      #PLEX_CLAIM: ${PLEXCLAIM}
+      #UMASK_SET: 022
+    volumes:
+      - plex:/config
+      - tv:/data/tvshows
+      - movies:/data/movies
+
+
   web:
     image: nginx
     depends_on:
@@ -242,3 +262,10 @@ volumes:
             type: none
             o: bind
             device: ${LOCALADDRES}/docker/ombi
+
+    plex:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${LOCALADDRES}/docker/plex
