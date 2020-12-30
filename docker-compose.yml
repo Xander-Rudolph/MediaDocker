@@ -154,6 +154,7 @@ services:
       - plex:/config
       - tv:/data/tvshows
       - movies:/data/movies
+      - music:/data/music
 
 
   web:
