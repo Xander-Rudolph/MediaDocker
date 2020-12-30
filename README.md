@@ -16,6 +16,9 @@ curl checkip.amazonaws.com
 
 
 * To stop the memory leak on docker windows / wsl (not sure which is the culprit), create a file called ".wslconfig" in your windows user directory (%USERPROFILE%) and put the following content:
+
 [wsl2]
+
 memory=6GB # Limits VM memory in WSL2 to 6 GB
+
 processors=3 # Makes the WSL2 VM use 3 virtual processors
