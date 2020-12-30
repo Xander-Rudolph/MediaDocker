@@ -135,8 +135,7 @@ services:
       - type: bind 
         source: //var/run/docker.sock
         target: //var/run/docker.sock
-
-# -------------------- Not working --------------------
+        
   plex:
     image: linuxserver/plex
     depends_on:
@@ -156,7 +155,7 @@ services:
       - movies:/data/movies
       - music:/data/music
 
-
+# -------------------- Not working --------------------
   web:
     image: nginx
     depends_on:
