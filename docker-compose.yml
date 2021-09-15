@@ -1,28 +1,25 @@
-version: "3.8"
-networks:
-  default:
-    ipam:
-      driver: default
-    
+version: "3.3"
+   
 services:
   vpn:
-    image: pia_vpn:0.0.1
+    #image: pia_vpn:latest
+    image: xanderu/pia_vpn:0.0.1
     cap_add:
       - net_admin
     dns:
-     - 8.8.4.4
      - 8.8.8.8
+     - 8.8.4.4
     ports:
-      - "51413:51413"     #transmission
-      - "51413:51413/udp" #transmission
-      - "9091:9091"       #transmission Web
-      - "8989:8989"       #sonar Web
-      - "7878:7878"       #radarr Web
-      - "8686:8686"       #lidarr Web
-      - "9117:9117"       #jackett Web
-      - "3579:3579"       #ombi Web
-      - "9000:9000"       #portainer Web
-      - "32400:32400"     #plex Web
+      - "12345:51413"               #transmission
+      - "12345:51413/udp"           #transmission
+      - "9091:9091"                 #transmission Web
+      - "8989:8989"                 #sonar Web
+      - "7878:7878"                 #radarr Web
+      - "8686:8686"                 #lidarr Web
+      - "9117:9117"                 #jackett Web
+      - "3579:3579"                 #ombi Web
+      - "9000:9000"                 #portainer Web
+      - "5299:5299"                 #Lazylibrarian
     environment:
       USERNAME: "${PIAUSERNAME}"
       PASSWORD: "${PIAPASSWORD}"
@@ -135,127 +132,94 @@ services:
       - type: bind 
         source: //var/run/docker.sock
         target: //var/run/docker.sock
-        
-  plex:
-    image: linuxserver/plex
+
+  lazylibrarian:
+    image: ghcr.io/linuxserver/lazylibrarian
+    environment:
+      TZ: ${TZONE}
+      PGID: 1000
+      PUID: 1000
+      DOCKER_MODS: linuxserver/calibre-web:calibre|linuxserver/mods:lazylibrarian-ffmpeg
     depends_on:
       - vpn
-    restart: always
     network_mode: "service:vpn"
-    environment:
-      TZ: ${TZONE}
-      PGID: 1001
-      PUID: 1001
-      VERSION: docker
-      #PLEX_CLAIM: ${PLEXCLAIM}
-      #UMASK_SET: 022
+    restart: always
     volumes:
-      - plex:/config
-      - tv:/data/tvshows
-      - movies:/data/movies
-      - music:/data/music
-
-# -------------------- Not working --------------------
-  web:
-    image: nginx
-    depends_on:
-      - transmission
-      - sonarr
-      - radarr
-      - lidarr
-      - jackett
-      - ombi
-    environment:
-      TZ: ${TZONE}
-      IPV6: 0
-    links:
-      - vpn:transmission
-      - vpn:sonarr
-      - vpn:radarr
-      - vpn:lidarr
-      - vpn:jackett
-      - vpn:ombi
-    ports:
-      - "8080:8080"
-      - "443:443"
-    read_only: true
-    volumes:
-      - $PWD/nginx.conf:/etc/nginx/conf.d/main.conf:ro
-      - $PWD/ssl:/etc/nginx/ssl:ro
-    tmpfs:
-      - /run
-      - /tmp
-      - /var/cache/nginx
-    restart: unless-stopped
-    stdin_open: true
-    tty: true
-
-# -------------------- End Not working --------------------
-
+      - lazylibrarian:/config
+      - downloads:/downloads
+      - books:/books
+      
 volumes:
+    downloads:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${SMBNETADDRE}/downloads
+        
+    tv:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${SMBNETADDRE}/TV
+        
+    books:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${SMBNETADDRE}/Books
+        
+    movies:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${SMBNETADDRE}/Movies
+        
+    music:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${SMBNETADDRE}/Music
+        
     transmission:
         driver: local
         driver_opts:
             type: none
             o: bind
             device: ${LOCALADDRES}/docker/transmission
-    
-    downloads:
-        driver: local
-        driver_opts:
-            type: cifs
-            device: //${SMBNETADDRE}/Media/downloads
-            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
         
     jackett:
-        driver: local
-        driver_opts:
-            type: none
-            o: bind
-            device: ${LOCALADDRES}/docker/jackett
-      
+      driver: local
+      driver_opts:
+          type: none
+          o: bind
+          device: ${LOCALADDRES}/docker/jackett
+
     sonarr:
         driver: local
         driver_opts:
             type: none
             o: bind
             device: ${LOCALADDRES}/docker/sonarr
-        
-    tv:
-        driver: local
-        driver_opts:
-            type: cifs
-            device: //${SMBNETADDRE}/Media/TV
-            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
-        
+
     radarr:
         driver: local
         driver_opts:
             type: none
             o: bind
             device: ${LOCALADDRES}/docker/radarr
-            
-    movies:
-        driver: local
-        driver_opts:
-            type: cifs
-            device: //${SMBNETADDRE}/Media/Movies
-            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
-
+                
     lidarr:
         driver: local
         driver_opts:
             type: none
             o: bind
             device: ${LOCALADDRES}/docker/lidarr
-        
-    music:
-        driver: local
-        driver_opts:
-            type: cifs
-            device: //${SMBNETADDRE}/Media/Music
-            o: user=${SMBUSERNAME},password=${SMBPASSWORD},dir_mode=0777,file_mode=0777
-
+                    
     ombi:
         driver: local
         driver_opts:
@@ -263,9 +227,23 @@ volumes:
             o: bind
             device: ${LOCALADDRES}/docker/ombi
 
-    plex:
+    jellyfinconfig:
         driver: local
         driver_opts:
             type: none
             o: bind
-            device: ${LOCALADDRES}/docker/plex
+            device: ${LOCALADDRES}/docker/jellyfin/config
+
+    jellyfincache:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${LOCALADDRES}/docker/jellyfin/cache
+
+    lazylibrarian:
+      driver: local
+      driver_opts:
+          type: none
+          o: bind
+          device: ${LOCALADDRES}/docker/lazylibrarian
